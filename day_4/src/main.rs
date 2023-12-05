@@ -85,7 +85,6 @@ fn part_2(content: &str) {
 
             winnings.iter().fold(0, |acc, (_key, hits)| acc + hits)
         })
-        .map(|hits| hits)
         .fold((0, VecDeque::new()), |(sum, mut queue), wins| {
             // println!("queue:{queue:?}");
             let cards = match queue.pop_front() {
