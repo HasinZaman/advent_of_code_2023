@@ -1,21 +1,5 @@
 use std::{fs::File, io::Read};
 
-fn quad((max_time, dist): (f64, f64)) -> Option<(f64, f64)> {
-
-    let determinant: f64 = max_time * max_time - 4. * dist;
-
-    if determinant < 0. {
-        return None;
-    }
-
-    Some(
-        (
-            (-1. * max_time - determinant.sqrt()) / -2.,
-            (-1. * max_time + determinant.sqrt()) / -2.,
-        )
-    )
-}
-
 fn part_1(content: &str) {
     let (time, dist) = {
         let mut tmp = content.split("\n");
@@ -23,7 +7,8 @@ fn part_1(content: &str) {
         (tmp.next().unwrap().trim(), tmp.next().unwrap().trim())
     };
 
-    let product = time.split(":")
+    let product = time
+        .split(":")
         .skip(1)
         .next()
         .unwrap()
@@ -37,37 +22,34 @@ fn part_1(content: &str) {
                 .unwrap()
                 .split(" ")
                 .filter(|val| *val != "")
-                .map(|val| val.trim().parse::<f64>().unwrap())
+                .map(|val| val.trim().parse::<f64>().unwrap()),
         )
         .filter_map(|(max_time, dist): (f64, f64)| {
-
             let determinant: f64 = max_time * max_time - 4. * dist;
-        
+
             if determinant < 0. {
                 return None;
             }
-        
-            Some(
-                (
-                    (-1. * max_time - determinant.sqrt()) / -2.,
-                    (-1. * max_time + determinant.sqrt()) / -2.,
-                )
-            )
+
+            Some((
+                (-1. * max_time - determinant.sqrt()) / -2.,
+                (-1. * max_time + determinant.sqrt()) / -2.,
+            ))
         })
         .map(|(val_1, val_2)| {
             let (min, max) = match val_1 < val_2 {
                 true => (val_1, val_2),
-                false => (val_2, val_1)
+                false => (val_2, val_1),
             };
             // println!("{min} {max}");
 
             let min = match min % 1. == 0. {
                 true => min + 1.,
-                false => min.ceil()
+                false => min.ceil(),
             };
             let max = match max % 1. == 0. {
                 true => max - 1.,
-                false => max.floor()
+                false => max.floor(),
             };
 
             // println!("{min} {max}");
@@ -87,7 +69,8 @@ fn part_2(content: &str) {
         (tmp.next().unwrap().trim(), tmp.next().unwrap().trim())
     };
 
-    let time = time.split(":")
+    let time = time
+        .split(":")
         .skip(1)
         .next()
         .unwrap()
@@ -102,7 +85,8 @@ fn part_2(content: &str) {
         .parse::<f64>()
         .unwrap();
 
-    let dist = dist.split(":")
+    let dist = dist
+        .split(":")
         .skip(1)
         .next()
         .unwrap()
@@ -118,13 +102,12 @@ fn part_2(content: &str) {
         .unwrap();
 
     let (val_1, val_2) = {
-
         let determinant: f64 = time * time - 4. * dist;
-    
+
         if determinant < 0. {
             panic!();
         }
-    
+
         (
             (-1. * time - determinant.sqrt()) / -2.,
             (-1. * time + determinant.sqrt()) / -2.,
@@ -134,17 +117,17 @@ fn part_2(content: &str) {
     let options = {
         let (min, max) = match val_1 < val_2 {
             true => (val_1, val_2),
-            false => (val_2, val_1)
+            false => (val_2, val_1),
         };
         // println!("{min} {max}");
 
         let min = match min % 1. == 0. {
             true => min + 1.,
-            false => min.ceil()
+            false => min.ceil(),
         };
         let max = match max % 1. == 0. {
             true => max - 1.,
-            false => max.floor()
+            false => max.floor(),
         };
 
         // println!("{min} {max}");
