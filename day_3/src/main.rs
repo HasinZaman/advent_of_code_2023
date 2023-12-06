@@ -134,13 +134,13 @@ mod part_1 {
             };
         }
         let sum = ids.iter().fold(0, |acc, val| acc + val);
-        println!("ids:{ids:?}");
+        // println!("ids:{ids:?}");
         println!("sum: {sum:?}");
     }
 }
 
 mod part_2 {
-    use std::collections::{HashSet, HashMap};
+    use std::collections::{HashMap, HashSet};
 
     #[derive(Debug, Clone)]
     enum Schema {
@@ -232,6 +232,23 @@ mod part_2 {
         gears_set
     }
 
+    fn add_id_to_gear(
+        gears: &HashSet<(usize, usize)>,
+        gear_bois: &mut HashMap<(usize, usize), Vec<u32>>,
+        id: u32,
+    ) {
+        gears
+            .iter()
+            .for_each(|gear| match gear_bois.contains_key(gear) {
+                true => {
+                    gear_bois.get_mut(gear).unwrap().push(id);
+                }
+                false => {
+                    gear_bois.insert(*gear, vec![id]);
+                }
+            })
+    }
+
     pub fn main(content: &str) {
         let schema = generate_schema(content);
 
@@ -260,50 +277,22 @@ mod part_2 {
                 (Mode::Active(gears, id), &Schema::Id(value), true) => {
                     let gears = add_neighbor_gears(&schema, gears, x, y);
                     let id = id * 10 + value;
-                    gears.iter()
-                        .for_each(|gear| {
-                            match gear_bois.contains_key(gear) {
-                                true => {
-                                    gear_bois.get_mut(gear).unwrap().push(id);
-                                }
-                                false => {
-                                    gear_bois.insert(*gear, vec![id]);
-                                }
-                            }
-                        });
+
+                    add_id_to_gear(&gears, &mut gear_bois, id);
 
                     Mode::Passive
                 }
                 (Mode::Passive, &Schema::Id(id), true) => {
-                    let gears = add_neighbor_gears(&schema, HashSet::new(), x, y);
+                    add_id_to_gear(
+                        &add_neighbor_gears(&schema, HashSet::new(), x, y),
+                        &mut gear_bois,
+                        *id,
+                    );
 
-                    gears.iter()
-                        .for_each(|gear| {
-                            match gear_bois.contains_key(gear) {
-                                true => {
-                                    gear_bois.get_mut(gear).unwrap().push(*id);
-                                }
-                                false => {
-                                    gear_bois.insert(*gear, vec![*id]);
-                                }
-                            }
-                        });
-                    
                     Mode::Passive
                 }
                 (Mode::Active(gears, id), _, _) => {
-                    
-                    gears.iter()
-                        .for_each(|gear| {
-                            match gear_bois.contains_key(gear) {
-                                true => {
-                                    gear_bois.get_mut(gear).unwrap().push(id);
-                                }
-                                false => {
-                                    gear_bois.insert(*gear, vec![id]);
-                                }
-                            }
-                        });
+                    add_id_to_gear(&gears, &mut gear_bois, id);
 
                     Mode::Passive
                 }
@@ -312,7 +301,8 @@ mod part_2 {
                 _ => Mode::Passive,
             };
         }
-        let sum = gear_bois.iter()
+        let sum = gear_bois
+            .iter()
             .filter(|(_, ids)| ids.len() == 2)
             .map(|(_, ids)| ids[0] * ids[1])
             .fold(0, |acc, val| acc + val);
