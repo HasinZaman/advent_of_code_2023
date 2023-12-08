@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read, collections::HashMap, cmp::Ordering};
+use std::{fs::File, io::Read};
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 enum Hand {
@@ -11,7 +11,7 @@ enum Hand {
     FiveOfAKind,
 }
 
-const WORST_HAND_ORD : [Hand; 7] = [
+const WORST_HAND_ORD: [Hand; 7] = [
     Hand::HighCard,
     Hand::OnePair,
     Hand::TwoPair,
@@ -30,13 +30,13 @@ impl From<[u8; 2]> for Hand {
             [3, _] => Hand::ThreeOfAKind,
             [2, 2] => Hand::TwoPair,
             [2, _] => Hand::OnePair,
-            [_, _] => Hand::HighCard
+            [_, _] => Hand::HighCard,
         }
     }
 }
 
-mod part_1{
-    use std::{collections::HashMap, cmp::Ordering};
+mod part_1 {
+    use std::{cmp::Ordering, collections::HashMap};
 
     use crate::{Hand, WORST_HAND_ORD};
 
@@ -47,7 +47,7 @@ mod part_1{
         Q,
         J,
         T,
-        Num(u8)
+        Num(u8),
     }
 
     impl From<char> for Card {
@@ -58,11 +58,7 @@ mod part_1{
                 'Q' => Card::Q,
                 'J' => Card::J,
                 'T' => Card::T,
-                num => Card::Num(
-                    num.to_string()
-                        .parse::<u8>()
-                        .unwrap()
-                    )
+                num => Card::Num(num.to_string().parse::<u8>().unwrap()),
             }
         }
     }
@@ -88,103 +84,100 @@ mod part_1{
             }
         }
     }
-    
-pub fn main(content: &str) {
-    let all_hands = content.split("\n")
-        .filter(|line| *line != "")
-        .map(|line| {
-            let mut parts = line.trim().split(" ");
 
-            (parts.next().unwrap(), parts.next().unwrap())
-        })
-        .map(|(hand, bet)| {
-            (
-                hand.chars()
-                    .map(|val| val.into())
-                    .collect::<Vec<Card>>(),
-                bet.parse::<u32>().unwrap()
-            )
-        })
-        .map(|(hand, bet)| {
-            let mut hand_combo = hand.iter()
-                .fold(HashMap::new(), |mut acc: HashMap<&Card, u8>, card| {
-                    match acc.get_mut(card) {
-                        Some(count) => {
-                            *count = *count + 1;
-                        },
-                        None => {
-                            acc.insert(card, 1);
-                        }
-                    }
-                    acc
-                })
-                .iter()
-                .map(|(_, count)| *count)
-                .collect::<Vec<u8>>();
-            hand_combo.sort();
-            hand_combo.reverse();
+    pub fn main(content: &str) {
+        let all_hands = content
+            .split("\n")
+            .filter(|line| *line != "")
+            .map(|line| {
+                let mut parts = line.trim().split(" ");
 
-
-            let hand_combo: Hand = [
-                *hand_combo.get(0).unwrap(),
-                *hand_combo.get(1).unwrap_or(&0),
-            ].into();
-            (
-                hand_combo,
+                (parts.next().unwrap(), parts.next().unwrap())
+            })
+            .map(|(hand, bet)| {
                 (
-                    hand,
-                    bet   
-                ),
-            )
-        })
-        .fold(HashMap::new(), |mut acc: HashMap<Hand, Vec<(Vec<Card>, u32)>>, (key, value)| {
-            match acc.get_mut(&key) {
-                Some(hands) => {
-                    hands.push(value);
-                },
-                None => {
-                    acc.insert(key, vec![value]);
-                }
-            };
+                    hand.chars().map(|val| val.into()).collect::<Vec<Card>>(),
+                    bet.parse::<u32>().unwrap(),
+                )
+            })
+            .map(|(hand, bet)| {
+                let mut hand_combo = hand
+                    .iter()
+                    .fold(HashMap::new(), |mut acc: HashMap<&Card, u8>, card| {
+                        match acc.get_mut(card) {
+                            Some(count) => {
+                                *count = *count + 1;
+                            }
+                            None => {
+                                acc.insert(card, 1);
+                            }
+                        }
+                        acc
+                    })
+                    .iter()
+                    .map(|(_, count)| *count)
+                    .collect::<Vec<u8>>();
+                hand_combo.sort();
+                hand_combo.reverse();
 
-            acc
-        });
-    
-    let sum: u32 = WORST_HAND_ORD.iter()
-        .filter_map(|hand| all_hands.get(hand))
-        .map(|hands| hands.clone())
-        .flat_map(|mut hands| {
-            hands.sort_by(|(val_1, _), (val_2, _)| {
-                val_1.iter()
-                    .zip(val_2)
-                    .find_map(|(val_1, val_2)| {
-                        match val_1.partial_cmp(val_2).unwrap() {
+                let hand_combo: Hand = [
+                    *hand_combo.get(0).unwrap(),
+                    *hand_combo.get(1).unwrap_or(&0),
+                ]
+                .into();
+                (hand_combo, (hand, bet))
+            })
+            .fold(
+                HashMap::new(),
+                |mut acc: HashMap<Hand, Vec<(Vec<Card>, u32)>>, (key, value)| {
+                    match acc.get_mut(&key) {
+                        Some(hands) => {
+                            hands.push(value);
+                        }
+                        None => {
+                            acc.insert(key, vec![value]);
+                        }
+                    };
+
+                    acc
+                },
+            );
+
+        let sum: u32 = WORST_HAND_ORD
+            .iter()
+            .filter_map(|hand| all_hands.get(hand))
+            .map(|hands| hands.clone())
+            .flat_map(|mut hands| {
+                hands.sort_by(|(val_1, _), (val_2, _)| {
+                    val_1
+                        .iter()
+                        .zip(val_2)
+                        .find_map(|(val_1, val_2)| match val_1.partial_cmp(val_2).unwrap() {
                             Ordering::Equal => None,
                             val => Some(val),
-                        }
-                    }).unwrap()
-            });
+                        })
+                        .unwrap()
+                });
 
-            // hands.reverse();
+                // hands.reverse();
 
-            hands
-        })
-        .enumerate()
-        .map(|(index, (hand, bet))| {
-            // println!("{}:{hand:?}:{bet}", index+1);
+                hands
+            })
+            .enumerate()
+            .map(|(index, (_hand, bet))| {
+                // println!("{}:{hand:?}:{bet}", index+1);
 
-            (index as u32 + 1) * bet
-        })
-        .sum();
-        // get 
+                (index as u32 + 1) * bet
+            })
+            .sum();
+        // get
 
-    println!("{:#?}", sum);
+        println!("{:#?}", sum);
+    }
 }
 
-}
-
-mod part_2{
-    use std::{collections::HashMap, cmp::Ordering};
+mod part_2 {
+    use std::{cmp::Ordering, collections::HashMap};
 
     use crate::{Hand, WORST_HAND_ORD};
 
@@ -195,7 +188,7 @@ mod part_2{
         Q,
         J,
         T,
-        Num(u8)
+        Num(u8),
     }
 
     impl From<char> for Card {
@@ -206,11 +199,7 @@ mod part_2{
                 'Q' => Card::Q,
                 'J' => Card::J,
                 'T' => Card::T,
-                num => Card::Num(
-                    num.to_string()
-                        .parse::<u8>()
-                        .unwrap()
-                    )
+                num => Card::Num(num.to_string().parse::<u8>().unwrap()),
             }
         }
     }
@@ -236,109 +225,106 @@ mod part_2{
             }
         }
     }
-    
-pub fn main(content: &str) {
-    let all_hands = content.split("\n")
-        .filter(|line| *line != "")
-        .map(|line| {
-            let mut parts = line.trim().split(" ");
 
-            (parts.next().unwrap(), parts.next().unwrap())
-        })
-        .map(|(hand, bet)| {
-            (
-                hand.chars()
-                    .map(|val| val.into())
-                    .collect::<Vec<Card>>(),
-                bet.parse::<u32>().unwrap()
-            )
-        })
-        .map(|(hand, bet)| {
-            let mut hand_combo = hand.iter()
-                .fold(HashMap::new(), |mut acc: HashMap<&Card, u8>, card| {
-                    match acc.get_mut(card) {
-                        Some(count) => {
-                            *count = *count + 1;
-                        },
-                        None => {
-                            acc.insert(card, 1);
+    pub fn main(content: &str) {
+        let all_hands = content
+            .split("\n")
+            .filter(|line| *line != "")
+            .map(|line| {
+                let mut parts = line.trim().split(" ");
+
+                (parts.next().unwrap(), parts.next().unwrap())
+            })
+            .map(|(hand, bet)| {
+                (
+                    hand.chars().map(|val| val.into()).collect::<Vec<Card>>(),
+                    bet.parse::<u32>().unwrap(),
+                )
+            })
+            .map(|(hand, bet)| {
+                let mut hand_combo =
+                    hand.iter()
+                        .fold(HashMap::new(), |mut acc: HashMap<&Card, u8>, card| {
+                            match acc.get_mut(card) {
+                                Some(count) => {
+                                    *count = *count + 1;
+                                }
+                                None => {
+                                    acc.insert(card, 1);
+                                }
+                            }
+
+                            acc
+                        });
+
+                // println!("{hand_combo:?}");
+
+                let jacks = hand_combo.remove(&Card::J);
+
+                let mut hand_combo = hand_combo
+                    .iter()
+                    .map(|(_, count)| *count)
+                    .collect::<Vec<u8>>();
+                hand_combo.sort();
+                hand_combo.reverse();
+
+                let hand_combo: Hand = [
+                    *hand_combo.get(0).unwrap_or(&0) + jacks.unwrap_or(0),
+                    *hand_combo.get(1).unwrap_or(&0),
+                ]
+                .into();
+
+                // println!("{hand_combo:?}");
+                (hand_combo, (hand, bet))
+            })
+            .fold(
+                HashMap::new(),
+                |mut acc: HashMap<Hand, Vec<(Vec<Card>, u32)>>, (key, value)| {
+                    match acc.get_mut(&key) {
+                        Some(hands) => {
+                            hands.push(value);
                         }
-                    }
+                        None => {
+                            acc.insert(key, vec![value]);
+                        }
+                    };
 
                     acc
-                });
-                
-            // println!("{hand_combo:?}");
-            
-            let jacks = hand_combo.remove(&Card::J);
-
-            let mut hand_combo = hand_combo.iter()
-                .map(|(_, count)| *count)
-                .collect::<Vec<u8>>();
-            hand_combo.sort();
-            hand_combo.reverse();
-
-
-            let hand_combo: Hand = [
-                *hand_combo.get(0).unwrap_or(&0) + jacks.unwrap_or(0),
-                *hand_combo.get(1).unwrap_or(&0),
-            ].into();
-
-            // println!("{hand_combo:?}");
-            (
-                hand_combo,
-                (
-                    hand,
-                    bet   
-                ),
-            )
-        })
-        .fold(HashMap::new(), |mut acc: HashMap<Hand, Vec<(Vec<Card>, u32,)>>, (key, value)| {
-            match acc.get_mut(&key) {
-                Some(hands) => {
-                    hands.push(value);
                 },
-                None => {
-                    acc.insert(key, vec![value]);
-                }
-            };
+            );
 
-            acc
-        });
-    
-    let sum: u32 = WORST_HAND_ORD.iter()
-        .filter_map(|hand| all_hands.get(hand))
-        .map(|hands| hands.clone())
-        .flat_map(|mut hands| {
-            hands.sort_by(|(val_1, _), (val_2, _)| {
-                val_1.iter()
-                    .zip(val_2)
-                    .find_map(|(val_1, val_2)| {
-                        match val_1.partial_cmp(val_2).unwrap() {
+        let sum: u32 = WORST_HAND_ORD
+            .iter()
+            .filter_map(|hand| all_hands.get(hand))
+            .map(|hands| hands.clone())
+            .flat_map(|mut hands| {
+                hands.sort_by(|(val_1, _), (val_2, _)| {
+                    val_1
+                        .iter()
+                        .zip(val_2)
+                        .find_map(|(val_1, val_2)| match val_1.partial_cmp(val_2).unwrap() {
                             Ordering::Equal => None,
                             val => Some(val),
-                        }
-                    }).unwrap()
-            });
+                        })
+                        .unwrap()
+                });
 
-            // hands.reverse();
+                // hands.reverse();
 
-            hands
-        })
-        .enumerate()
-        .map(|(index, (hand, bet))| {
-            // println!("{}:{hand:?}:{bet}", index+1);
+                hands
+            })
+            .enumerate()
+            .map(|(index, (_hand, bet))| {
+                // println!("{}:{hand:?}:{bet}", index+1);
 
-            (index as u32 + 1) * bet
-        })
-        .sum();
-        // get 
+                (index as u32 + 1) * bet
+            })
+            .sum();
+        // get
 
-    println!("{:#?}", sum);
+        println!("{:#?}", sum);
+    }
 }
-
-}
-
 
 fn main() {
     let mut f: File = File::open("input.txt").unwrap();
